@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: always
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - open-webui-network
+    # For GPU support (uncomment if needed):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  pipelines:
+    image: ghcr.io/open-webui/pipelines:main
+    container_name: pipelines
+    restart: always
+    ports:
+      - "9099:9099"
+    volumes:
+      - pipelines_data:/app/pipelines
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - open-webui-network
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: always
+    ports:
+      - "3000:8080"
+    volumes:
+      - open-webui_data:/app/backend/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - pipelines
+      - ollama
+    networks:
+      - open-webui-network
+    environment:
+      - PIPELINES_SERVICE_URL=http://pipelines:9099
+      - OLLAMA_API_BASE_URL=http://ollama:11434
+
+volumes:
+  ollama_data:
+    name: ollama
+  pipelines_data:
+    name: pipelines
+  open-webui_data:
+    name: open-webui
+
+networks:
+  open-webui-network:
+    driver: bridge
