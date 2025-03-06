@@ -1,5 +1,4 @@
 version: '3.8'
-
 services:
   ollama:
     image: ollama/ollama:latest
@@ -11,6 +10,8 @@ services:
       - ollama_data:/root/.ollama
     networks:
       - open-webui-network
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     # For GPU support (uncomment if needed):
     # deploy:
     #   resources:
@@ -19,7 +20,6 @@ services:
     #         - driver: nvidia
     #           count: all
     #           capabilities: [gpu]
-
   pipelines:
     image: ghcr.io/open-webui/pipelines:main
     container_name: pipelines
@@ -32,7 +32,8 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - open-webui-network
-
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
     container_name: open-webui
@@ -51,6 +52,26 @@ services:
     environment:
       - PIPELINES_SERVICE_URL=http://pipelines:9099
       - OLLAMA_API_BASE_URL=http://ollama:11434
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+  
+  # Add Watchtower for update checking
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_POLL_INTERVAL=86400 # Check for updates once per day (in seconds)
+      - WATCHTOWER_CLEANUP=true # Remove old images after updating
+      - WATCHTOWER_INCLUDE_STOPPED=true # Also check for updates on stopped containers
+      - WATCHTOWER_NO_STARTUP_MESSAGE=true
+      - WATCHTOWER_MONITOR_ONLY=true # Only monitor for updates, don't automatically update
+      - TZ=America/New_York # Set your timezone
+    command: --label-enable # Only watch containers with the specific label
+    networks:
+      - open-webui-network
 
 volumes:
   ollama_data:
