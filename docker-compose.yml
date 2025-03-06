@@ -63,11 +63,11 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - WATCHTOWER_POLL_INTERVAL=86400 # Check for updates once per day (in seconds)
+      - WATCHTOWER_POLL_INTERVAL=10800 # Check for updates once per day (in seconds)
       - WATCHTOWER_CLEANUP=true # Remove old images after updating
       - WATCHTOWER_INCLUDE_STOPPED=true # Also check for updates on stopped containers
       - WATCHTOWER_NO_STARTUP_MESSAGE=true
-      - WATCHTOWER_MONITOR_ONLY=true # Only monitor for updates, don't automatically update
+      #- WATCHTOWER_MONITOR_ONLY=true # Only monitor for updates, don't automatically update
       - TZ=America/New_York # Set your timezone
     command: --label-enable # Only watch containers with the specific label
     networks:
